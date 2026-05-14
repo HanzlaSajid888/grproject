@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "153341749063",
+    "firebase_url": "https://grproject-30463-default-rtdb.firebaseio.com",
+    "project_id": "grproject-30463",
+    "storage_bucket": "grproject-30463.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:153341749063:android:fdcb4fc7b37107efcc8e62",
+        "android_client_info": {
+          "package_name": "com.example.untitled1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqCEobgkDpeIgsjJ1amqmlN__c16DUWWg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
