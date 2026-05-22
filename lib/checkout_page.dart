@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'providers/cart_provider.dart';
+import 'providers/auth_provider.dart';
 import 'order_success_page.dart';
+import 'payment_page.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -22,6 +24,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool _isProcessing = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userData = Provider.of<AuthProvider>(context, listen: false).userData;
+      if (userData != null) {
+        _nameController.text = userData['name'] ?? '';
+        _emailController.text = userData['email'] ?? '';
+        _phoneController.text = userData['phone'] ?? '';
+        _addressController.text = userData['address'] ?? '';
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
@@ -30,58 +46,73 @@ class _CheckoutPageState extends State<CheckoutPage> {
     super.dispose();
   }
 
-  Future<void> _placeOrder() async {
+  Future<void> _proceedToPayment() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isProcessing = true;
-      });
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentPage(
+            amount: cartProvider.totalPrice,
+            onPaymentSuccess: () async {
+              Navigator.pop(context); // Close Payment Page
+              
+              setState(() {
+                _isProcessing = true;
+              });
 
-      try {
-        final cartProvider = Provider.of<CartProvider>(context, listen: false);
-        
-        // Prepare order data
-        final Map<String, dynamic> orderData = {
-          'customer': {
-            'name': _nameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'address': _addressController.text.trim(),
-          },
-          'items': cartProvider.items.map((item) => {
-            'productId': item.product.id,
-            'name': item.product.name,
-            'price': item.product.price,
-            'quantity': item.quantity,
-          }).toList(),
-          'totalPrice': cartProvider.totalPrice,
-          'timestamp': ServerValue.timestamp,
-          'status': 'Pending',
-        };
+              try {
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                
+                // Prepare order data
+                final Map<String, dynamic> orderData = {
+                  'customerId': authProvider.user?.uid ?? 'guest',
+                  'customer': {
+                    'name': _nameController.text.trim(),
+                    'email': _emailController.text.trim(),
+                    'phone': _phoneController.text.trim(),
+                    'address': _addressController.text.trim(),
+                  },
+                  'items': cartProvider.items.map((item) => {
+                    'productId': item.product.id,
+                    'name': item.product.name,
+                    'price': item.product.price,
+                    'quantity': item.quantity,
+                  }).toList(),
+                  'totalPrice': cartProvider.totalPrice,
+                  'timestamp': ServerValue.timestamp,
+                  'status': 'Pending',
+                };
 
-        // Push to Firebase Realtime Database
-        final DatabaseReference orderRef = FirebaseDatabase.instance.ref().child('orders').push();
-        await orderRef.set(orderData);
-        
-        final String orderId = orderRef.key ?? 'UNKNOWN';
+                // Push to Firebase Realtime Database
+                final DatabaseReference orderRef = FirebaseDatabase.instance.ref().child('orders').push();
+                await orderRef.set(orderData);
+                
+                final String orderId = orderRef.key ?? 'UNKNOWN';
 
-        cartProvider.clearCart();
-        
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => OrderSuccessPage(orderId: orderId)),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to place order: $e')),
-          );
-          setState(() {
-            _isProcessing = false;
-          });
-        }
-      }
+                cartProvider.clearCart();
+                
+                if (mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => OrderSuccessPage(orderId: orderId)),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to place order: $e')),
+                  );
+                  setState(() {
+                    _isProcessing = false;
+                  });
+                }
+              }
+            },
+          ),
+        ),
+      );
     }
   }
 
@@ -228,9 +259,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 
                 const SizedBox(height: 40),
                 
-                // Place Order Button
+                // Proceed to Payment Button
                 ElevatedButton(
-                  onPressed: _isProcessing ? null : _placeOrder,
+                  onPressed: _isProcessing ? null : _proceedToPayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
@@ -247,7 +278,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                       )
                     : Text(
-                        'PLACE ORDER',
+                        'PROCEED TO PAYMENT',
                         style: GoogleFonts.montserrat(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5,

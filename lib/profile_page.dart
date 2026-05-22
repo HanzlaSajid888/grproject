@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'sign_in_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -12,6 +13,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
+    final userData = authProvider.userData;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -52,16 +54,40 @@ class ProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               
-              // Email
+              // Name
               Text(
-                user?.email ?? 'No Email',
+                userData?['name'] ?? 'LuxeMart User',
                 style: GoogleFonts.montserrat(
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 8),
+              
+              // Email
+              Text(
+                user?.email ?? 'No Email',
+                style: GoogleFonts.montserrat(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Phone
+              if (userData?['phone'] != null && userData!['phone'].toString().isNotEmpty)
+                Text(
+                  userData['phone'],
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              
+              const SizedBox(height: 16),
               Text(
                 'LuxeMart Member',
                 style: GoogleFonts.montserrat(
@@ -71,6 +97,43 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
+              
+              // Edit Profile Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(CupertinoIcons.pencil, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'EDIT PROFILE',
+                        style: GoogleFonts.montserrat(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               
               // Logout Button
               SizedBox(

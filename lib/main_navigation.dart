@@ -4,6 +4,7 @@ import 'home_screen.dart';
 import 'profile_page.dart';
 import 'search_page.dart';
 import 'cart_page.dart';
+import 'wishlist_page.dart';
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
@@ -17,6 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const SearchPage(),
+    const WishlistPage(),
     const CartPage(),
     const ProfilePage(),
   ];
@@ -49,6 +51,11 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Icon(CupertinoIcons.search),
             activeIcon: Icon(CupertinoIcons.search, size: 26),
             label: 'SEARCH',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.heart),
+            activeIcon: Icon(CupertinoIcons.heart_fill),
+            label: 'WISHLIST',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag_outlined),

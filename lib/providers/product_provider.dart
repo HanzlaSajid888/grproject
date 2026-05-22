@@ -87,4 +87,12 @@ class ProductProvider with ChangeNotifier {
     final lowerQuery = query.toLowerCase();
     return _allProducts.where((p) => p.name.toLowerCase().contains(lowerQuery) || p.category.toLowerCase().contains(lowerQuery)).toList();
   }
+
+  Future<void> addProduct(Product product) async {
+    await _dbRef.child(product.id).set(product.toMap());
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    await _dbRef.child(productId).remove();
+  }
 }

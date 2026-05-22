@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/product_provider.dart';
+import 'providers/wishlist_provider.dart';
 import 'splash_screen.dart';
 import 'firebase_options.dart';
 
@@ -25,6 +26,10 @@ void main() async {
           update: (_, auth, previousCart) => CartProvider(auth.user?.uid)..setItems(previousCart?.currentItems ?? []),
         ),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
+          create: (_) => WishlistProvider(null),
+          update: (_, auth, __) => WishlistProvider(auth.user?.uid),
+        ),
       ],
       child: const MyApp(),
     ),

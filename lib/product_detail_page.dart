@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'models/product.dart';
 import 'providers/cart_provider.dart';
+import 'providers/wishlist_provider.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -22,9 +23,25 @@ class ProductDetailPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.heart, color: Colors.black),
-            onPressed: () {},
+          Consumer<WishlistProvider>(
+            builder: (context, wishlist, child) {
+              final isFavorite = wishlist.isFavorite(product.id);
+              return IconButton(
+                icon: Icon(
+                  isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                  color: isFavorite ? Colors.redAccent : Colors.black,
+                ),
+                onPressed: () {
+                  wishlist.toggleFavorite(product);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isFavorite ? 'Removed from Wishlist' : 'Added to Wishlist'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
