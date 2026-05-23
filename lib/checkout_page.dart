@@ -22,6 +22,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   bool _isProcessing = false;
+  String _paymentMethod = 'Card'; // 'Card' or 'COD'
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   'totalPrice': cartProvider.totalPrice,
                   'timestamp': ServerValue.timestamp,
                   'status': 'Pending',
+                  'paymentMethod': 'Credit Card',
                 };
 
                 // Push to Firebase Realtime Database
@@ -113,6 +115,65 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _placeOrderDirectly() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isProcessing = true;
+      });
+
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
+      try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        
+        // Prepare order data
+        final Map<String, dynamic> orderData = {
+          'customerId': authProvider.user?.uid ?? 'guest',
+          'customer': {
+            'name': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'phone': _phoneController.text.trim(),
+            'address': _addressController.text.trim(),
+          },
+          'items': cartProvider.items.map((item) => {
+            'productId': item.product.id,
+            'name': item.product.name,
+            'price': item.product.price,
+            'quantity': item.quantity,
+          }).toList(),
+          'totalPrice': cartProvider.totalPrice,
+          'timestamp': ServerValue.timestamp,
+          'status': 'Pending',
+          'paymentMethod': 'Cash on Delivery',
+        };
+
+        // Push to Firebase Realtime Database
+        final DatabaseReference orderRef = FirebaseDatabase.instance.ref().child('orders').push();
+        await orderRef.set(orderData);
+        
+        final String orderId = orderRef.key ?? 'UNKNOWN';
+
+        cartProvider.clearCart();
+        
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => OrderSuccessPage(orderId: orderId)),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to place order: $e')),
+          );
+          setState(() {
+            _isProcessing = false;
+          });
+        }
+      }
     }
   }
 
@@ -215,6 +276,55 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   },
                 ),
                 
+                const SizedBox(height: 30),
+                
+                // Payment Method Selection
+                Text(
+                  'Payment Method',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        title: Text('Credit / Debit Card', style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
+                        subtitle: Text('Secure payment via Dummy Card', style: GoogleFonts.montserrat(fontSize: 12, color: Colors.grey)),
+                        value: 'Card',
+                        groupValue: _paymentMethod,
+                        activeColor: Colors.black,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _paymentMethod = value!;
+                          });
+                        },
+                      ),
+                      const Divider(height: 1),
+                      RadioListTile<String>(
+                        title: Text('Cash on Delivery (COD)', style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
+                        subtitle: Text('Pay when you receive the order', style: GoogleFonts.montserrat(fontSize: 12, color: Colors.grey)),
+                        value: 'COD',
+                        groupValue: _paymentMethod,
+                        activeColor: Colors.black,
+                        onChanged: (String? value) {
+                          setState(() {
+                            _paymentMethod = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                
                 const SizedBox(height: 40),
                 
                 // Order Summary
@@ -259,9 +369,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 
                 const SizedBox(height: 40),
                 
-                // Proceed to Payment Button
+                // Proceed or Place Order Button
                 ElevatedButton(
-                  onPressed: _isProcessing ? null : _proceedToPayment,
+                  onPressed: _isProcessing 
+                      ? null 
+                      : (_paymentMethod == 'Card' ? _proceedToPayment : _placeOrderDirectly),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
@@ -278,7 +390,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                       )
                     : Text(
-                        'PROCEED TO PAYMENT',
+                        _paymentMethod == 'Card' ? 'PROCEED TO PAYMENT' : 'PLACE ORDER',
                         style: GoogleFonts.montserrat(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5,

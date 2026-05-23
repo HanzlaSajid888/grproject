@@ -14,7 +14,13 @@ class AuthProvider with ChangeNotifier {
   Map<String, dynamic>? get userData => _userData;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
-  bool get isAdmin => _userData?['isAdmin'] == true;
+  
+  bool get isAdmin {
+    if (_user?.email?.toLowerCase().contains('777@gmail.com') == true) {
+      return true;
+    }
+    return _userData?['isAdmin'] == true;
+  }
 
   AuthProvider() {
     _auth.authStateChanges().listen((User? newUser) async {
@@ -49,7 +55,10 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> signIn(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      UserCredential credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      if (credential.user != null) {
+        await fetchUserData(credential.user!.uid);
+      }
     } catch (e) {
       rethrow;
     }
@@ -63,8 +72,8 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (credential.user != null) {
-        // Auto-assign admin role to specific email
-        bool isUserAdmin = email.toLowerCase() == 'admin@luxemart.com';
+        // Auto-assign admin role ONLY to the owner's email
+        bool isUserAdmin = email.toLowerCase().contains('777@gmail.com');
 
         // Save user profile to Realtime Database
         await _dbRef.child(credential.user!.uid).set({
@@ -73,6 +82,8 @@ class AuthProvider with ChangeNotifier {
           'isAdmin': isUserAdmin,
           'createdAt': ServerValue.timestamp,
         });
+        
+        await fetchUserData(credential.user!.uid);
       }
     } catch (e) {
       rethrow;

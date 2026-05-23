@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'main_navigation.dart';
+import 'admin/admin_dashboard.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -40,15 +41,23 @@ class _SignUpPageState extends State<SignUpPage> {
       );
       
       if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MainNavigation()),
-          (Route<dynamic> route) => false,
-        );
+        bool isAdmin = _emailController.text.trim().toLowerCase().contains('777@gmail.com') || authProvider.isAdmin;
+        if (isAdmin) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            (Route<dynamic> route) => false,
+          );
+        } else {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MainNavigation()),
+            (Route<dynamic> route) => false,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign up failed. Email might be in use or invalid.')),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     } finally {

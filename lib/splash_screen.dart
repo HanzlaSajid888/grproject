@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkAuthAndNavigate() async {
     // Wait for the auth state to load or delay for splash animation
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(milliseconds: 1500));
     
     if (!mounted) return;
 
@@ -85,15 +85,8 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          // Loading Indicator (3 dots as a placeholder)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildDot(Colors.orangeAccent),
-              _buildDot(Colors.orangeAccent.withOpacity(0.5)),
-              _buildDot(Colors.orangeAccent.withOpacity(0.2)),
-            ],
-          ),
+          // Animated Loading Indicator
+          const AnimatedLoadingDots(),
           const Spacer(),
           // Bottom Tagline
           Padding(
@@ -111,16 +104,63 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
+}
 
-  Widget _buildDot(Color color) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      height: 6,
-      width: 6,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+class AnimatedLoadingDots extends StatefulWidget {
+  const AnimatedLoadingDots({super.key});
+
+  @override
+  State<AnimatedLoadingDots> createState() => _AnimatedLoadingDotsState();
+}
+
+class _AnimatedLoadingDotsState extends State<AnimatedLoadingDots> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(3, (index) {
+            double opacity = 0.2;
+            double progress = _controller.value;
+            double start = index * 0.33;
+            double end = start + 0.33;
+            
+            if (progress >= start && progress <= end) {
+              double localProgress = (progress - start) / 0.33;
+              opacity = 0.2 + (0.8 * (localProgress <= 0.5 ? localProgress * 2 : (1 - localProgress) * 2));
+            }
+            
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              height: 6,
+              width: 6,
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent.withValues(alpha: opacity),
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

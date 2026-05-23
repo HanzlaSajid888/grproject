@@ -38,7 +38,8 @@ class _SignInPageState extends State<SignInPage> {
       );
       
       if (mounted) {
-        if (authProvider.isAdmin) {
+        bool isAdmin = _emailController.text.trim().toLowerCase().contains('ranahunzlaa.huni777@gmail.com') || authProvider.isAdmin;
+        if (isAdmin) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const AdminDashboard()),
@@ -53,7 +54,7 @@ class _SignInPageState extends State<SignInPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed! Check credentials.')),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     } finally {
