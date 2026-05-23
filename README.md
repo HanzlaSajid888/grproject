@@ -5,14 +5,6 @@ A full-featured, real-world E-Commerce mobile application built with **Flutter &
 
 ---
 
-## 📱 Screenshots
-
-| Home Screen | Admin Panel | Payment |
-|---|---|---|
-| ![Home](screenshots/ss_home.jpeg) | ![Admin](screenshots/ss_admin.jpeg) | ![Payment](screenshots/ss_payment.jpeg) |
-
----
-
 ## ✨ Features
 
 ### 👤 User Side
